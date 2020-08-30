@@ -1,0 +1,12 @@
+working: /Code/p2v_test_data/output
+train_data: /Code/p2v_test_data/raw_pcaps_train
+test_data: /Code/p2v_test_data/raw_pcaps_test
+darpa: /Code/data/DARPA2009_groundtruth.csv
+options:
+  threads: 10
+hyperparameters:
+  ngram: 2
+  vocab_size: 50000
+classifiers:
+  - rfc
+  - gnb
