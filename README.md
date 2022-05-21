@@ -4,20 +4,7 @@
 
 ### Requirements
 
-Packet2Vec requires Python 3.5 and the following 3rd-party libraries:
-
-- six==1.12.0
-- tensorflow==1.13.1
-- joblib==0.13.2
-- numpy==1.16.2
-- h5py==2.9.0
-- docopt==0.6.2
-- matplotlib==3.0.3
-- scikit_learn==0.21.3
-- PyYAML==5.1.2
-
-These third party requirements can be installed using the `requirements.txt` file:
-
+Packet2Vec requires Python 3.5 or greater.  The required libraries can be found in requirements.txt.
 ```
 pip install -r requirements.txt
 ```
@@ -25,6 +12,8 @@ To compile the required shared library (ParallelPcap), Packet2Vec requires the f
 
 - CMake
 - Boost >=1.66.0
+
+Notes on building Boost from scratch can be found [here](README_Boost.md).
 
 To compile ParallelPcap:
 ```

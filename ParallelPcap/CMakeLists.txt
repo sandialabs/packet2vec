@@ -1,4 +1,5 @@
-cmake_minimum_required (VERSION 2.6)
+project(ParallelPcap)
+cmake_minimum_required (VERSION 2.8.12)
 
 ENABLE_LANGUAGE(CXX)
 

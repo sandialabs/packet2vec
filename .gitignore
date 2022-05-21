@@ -1,0 +1,7 @@
+local_config
+.virtualenv
+build
+*.so
+__pycache__
+*.swp
+*.swo
