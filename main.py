@@ -7,7 +7,7 @@ Usage:
     main.py tokens       -c <config>
     main.py embeddings   -c <config>
     main.py features     -c <config>
-    main.py classifier   -c <config>
+    main.py classifiers  -c <config>
 
 Options:
     -h, --help                                  Show documentation
