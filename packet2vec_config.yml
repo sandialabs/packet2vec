@@ -1,3 +1,6 @@
+# Working directory is where intermediate files are placed. If running
+# packet2 vec on different datasets, make sure the working directory
+# is unique for each.
 working: /Code/p2v_test_data/output
 train_data: /Code/p2v_test_data/raw_pcaps_train
 test_data: /Code/p2v_test_data/raw_pcaps_test
