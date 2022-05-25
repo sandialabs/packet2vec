@@ -61,8 +61,8 @@ def finalize_feature_vectors(output_dir, data_dir, darpa):
     
     token_files = os.listdir(intVV)
     for token_file in token_files:
-        pcap_id = token_file.split('_')[1].split('.')[0]
-        pcap_filename = pcap_id + '.bin'
+        pcap_filename = '_'.join(token_file.split('_')[1:])
+        pcap_id = '.'.join(pcap_filename.split('.')[0:-1])
 
         X = p2v.generateX(os.path.join(intVV, token_file))
         y = p2v.generateY(os.path.join(pcaps, pcap_filename))
