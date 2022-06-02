@@ -4,7 +4,7 @@ import re
 import h5py
 import datetime 
 import tensorflow as tf
-from common import natural_keys
+from common import natural_keys, check_path
 
 def load_features(data_dir):
     """
@@ -49,12 +49,19 @@ def finalize_feature_vectors(output_dir, data_dir, darpa):
         Path to the groundtruth file for the DARPA2009
         dataset for labeling
     """
- 
+
+    check_path(output_dir)
+    check_path(data_dir)
+    check_path(darpa)
+
     final_embeddings = load_features(data_dir)
     p2v = parallelpcap.Packet2Vec(final_embeddings, darpa, False)
 
     intVV = os.path.join(data_dir, 'intVectorVector')
+    check_path(intVV)
     pcaps = os.path.join(data_dir, 'pcaps')
+    check_path(pcaps)
+
     feature_dir = os.path.join(output_dir, 'features')
     if not os.path.isdir(feature_dir):
         os.makedirs(feature_dir)
@@ -64,8 +71,18 @@ def finalize_feature_vectors(output_dir, data_dir, darpa):
         pcap_filename = '_'.join(token_file.split('_')[1:])
         pcap_id = '.'.join(pcap_filename.split('.')[0:-1])
 
+        print("token_file", token_file)
+        print("pcap_filename", pcap_filename)
+        print("pcap_id", pcap_id)
+        print("pcaps", pcaps)
         X = p2v.generateX(os.path.join(intVV, token_file))
-        y = p2v.generateY(os.path.join(pcaps, pcap_filename))
+
+        pcap_path = os.path.join(pcaps, pcap_filename)
+        print(pcap_path)
+        if not os.path.exists(pcap_path):
+          raise FileNotFoundError(f"Path to pcap file {pcap_path}" +
+                                  " does not exist")
+        y = p2v.generateY(pcap_path)
 
         feature_filename = os.path.join(feature_dir, pcap_id + '_features.h5')
         h5f = h5py.File(feature_filename, 'w')

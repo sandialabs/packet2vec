@@ -344,6 +344,9 @@ inline void Pcap::readPackets(unsigned char* data)
   {
     uint64_t beg = getBeginIndex(numPacketBytes, threadId, mythreadCount);
     uint64_t end = getEndIndex(numPacketBytes, threadId, mythreadCount);
+    //std::cout << "threadId " << threadId << " mythreadCount " 
+    //          << mythreadCount << " numPacketBytes "
+    //          << numPacketBytes << std::endl;
 
     // We go through the first part of the data and find candidates
     // of what we think could be timestamps (i.e. the begining of a
@@ -358,11 +361,15 @@ inline void Pcap::readPackets(unsigned char* data)
     // We know the largest a packet can be is snaplen long.  So we find
     // candidates over that range.  However, for now we throw an exception
     // if our range over the data is smaller than snaplen
-    if ( end - beg < snaplen) {
-      throw PcapException("Pcap::readPackets(): in thread looking at data"
-        "beg-end < snaplen, which we don't handle currently.  Implement a"
-        " better approach or reduce the number of threads.");
-    }
+    //if ( end - beg < snaplen) {
+    //  std::string message = "Pcap::readPackets(): in thread looking at data"
+    //    "beg-end < snaplen, which we don't handle currently.  Implement a"
+    //    " better approach or reduce the number of threads. " 
+    //    "Beg: " + boost::lexical_cast<std::string>(beg) +
+    //    " End: " + boost::lexical_cast<std::string>(end) +
+    //    " snaplen: " + boost::lexical_cast<std::string>(snaplen);
+    //  throw PcapException(message);
+    //}
 
     // Go through the first snaplen part of packetData, and see which of the 
     // the bytes could possibly be the start of a packet.  
@@ -394,6 +401,7 @@ inline void Pcap::readPackets(unsigned char* data)
 
   //size_t mythreadCount = globalNumThreads;
   // Force mythreadCount = 1 
+  // Having more threads didn't seem to speed up anything.  Just use one thread
   size_t mythreadCount = 1;
   
   // Reducing thread count if we have too many requested for the size of the 
