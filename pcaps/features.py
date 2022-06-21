@@ -22,7 +22,8 @@ def load_features(data_dir):
     with tf.device('/cpu:0'):
         graph = tf.Graph()
         with graph.as_default():
-            new_saver = tf.train.import_meta_graph(os.path.join(save_dir, 'embeddings_model.meta'))
+            new_saver = tf.train.import_meta_graph(os.path.join(save_dir, 
+              'embeddings_model.meta'))
             embeddings = graph.get_tensor_by_name('embeddings:0')
             norm = graph.get_tensor_by_name('norm:0')
             normalized_embeddings = embeddings / norm
