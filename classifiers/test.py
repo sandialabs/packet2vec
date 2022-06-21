@@ -2,7 +2,7 @@ import argparse
 import joblib
 import h5py
 import os
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import time
 import parallelpcap
 from pcaps.features import load_features
