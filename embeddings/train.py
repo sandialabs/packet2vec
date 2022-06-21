@@ -1,4 +1,4 @@
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import numpy as np
 import os
 import struct
@@ -63,9 +63,11 @@ def update(output_dir, load_dir, data_dir, vocab_size):
         data = read_data(bf)
 
         if firstRun:
-            final_embeddings = w2v.update_model(model_save_dir, data, load_dir, vocab_size=vocab_size)
+            final_embeddings = w2v.update_model(model_save_dir, data, load_dir, 
+                                                vocab_size=vocab_size)
         else:
-            final_embeddings = w2v.update_model(model_save_dir, data, vocab_size=vocab_size)
+            final_embeddings = w2v.update_model(model_save_dir, data, 
+                                                vocab_size=vocab_size)
 
         if finalRun: return final_embeddings
         firstRun = False
@@ -101,9 +103,11 @@ def create(output_dir, data_dir, vocab_size):
         data = read_data(bf)
         
         if firstRun:
-            final_embeddings = w2v.new_model(model_save_dir, data, vocab_size=vocab_size)
+            final_embeddings = w2v.new_model(model_save_dir, data, 
+                                             vocab_size=vocab_size)
         else:
-            final_embeddings = w2v.update_model(model_save_dir, data, vocab_size=vocab_size)
+            final_embeddings = w2v.update_model(model_save_dir, data, 
+                                                vocab_size=vocab_size)
 
         if finalRun: return final_embeddings
         firstRun = False
