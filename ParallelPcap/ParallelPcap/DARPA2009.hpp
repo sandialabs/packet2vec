@@ -74,10 +74,18 @@ public:
    * malicious according to the DARPA2009 groundtruth csv.
    * \param packetInfo The PacketInfo object corresponding to the packet
    *                   you want to test.
-   * \param Returns a boolean. True if packet is considered malicious.
+   * \return Returns a boolean. True if packet is considered malicious.
    */
   bool is_danger(PacketInfo packetInfo);
+
+  /**
+   * Returns the type of event (e.g. ddos or benign
+   * \param packetInfo The PacketInfo object corresponding to the packet
+   *                   you want to test.
+   * \return Returns a string with the event category.
+   */
   std::string packet_event_type(PacketInfo packetInfo);
+
 private:
   std::multimap<std::string, DARPA2009MaliciousItem> sourceIpIndex;
   time_t stringToEpoch(const std::string s);
@@ -99,16 +107,17 @@ DARPA2009::DARPA2009(std::string filename)
   std::string startTime;
   std::string stopTime;
 
-  while (ip.good())
+  while (ip.good()) // Process each line of the file
   {
-    getline(ip, eventType, ',');
-    getline(ip, c2s, ',');
-    getline(ip, sourceIp, ',');
-    getline(ip, sourcePort, ',');
-    getline(ip, destIp, ',');
-    getline(ip, destPort, ',');
-    getline(ip, startTime, ',');
-    getline(ip, stopTime, '\n');
+    // Use getline with a comma as a delimiter to get each field
+    std::getline(ip, eventType, ',');
+    std::getline(ip, c2s, ',');
+    std::getline(ip, sourceIp, ',');
+    std::getline(ip, sourcePort, ',');
+    std::getline(ip, destIp, ',');
+    std::getline(ip, destPort, ',');
+    std::getline(ip, startTime, ',');
+    std::getline(ip, stopTime, '\n');
     
     this->sourceIpIndex.insert(std::make_pair(
       sourceIp, 

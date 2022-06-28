@@ -59,8 +59,10 @@ public:
     bp::list &ngrams,
     std::string darpafile,
     bool debug
-  ) : _d(0), _ngrams(ngrams), _embeddings(embeddings), _darpa(DARPA2009(darpafile)), 
-      _labels(np::array(p::list())), _msg(debug) { 
+  ) : _d(0), _ngrams(ngrams), _embeddings(embeddings), 
+      _darpa(DARPA2009(darpafile)), 
+      _labels(np::array(p::list())), _msg(debug) 
+  { 
     // Restore the dictionary
     std::ifstream ifs(dictPath);
     ba::text_iarchive ar(ifs);
@@ -117,7 +119,7 @@ public:
     this->_msg.printDuration("TestPcap::featureVector: Time to translate: ", t1, t2);
 
     t1 = std::chrono::high_resolution_clock::now();
-    np::ndarray features = Packet2Vec::translateX(
+    np::ndarray features = Packet2Vec<DARPA2009>::translateX(
       this->_embeddings,
       vvtranslated,
       this->_msg.isDebug()
@@ -128,7 +130,8 @@ public:
     auto time_everything2 = std::chrono::high_resolution_clock::now();
     this->_msg.printDuration("TestPcap::featureVector: Time for everything: ", 
      time_everything1, time_everything2);
-    this->_labels = Packet2Vec::translateY(pcap, this->_darpa, this->_msg.isDebug());  
+    this->_labels = Packet2Vec<DARPA2009>::translateY(pcap, this->_darpa, 
+                                           this->_msg.isDebug());  
 
     return features;
   }

@@ -7,6 +7,7 @@
 #include <ParallelPcap/Packet2Vec.hpp>
 #include <ParallelPcap/PacketInfo.hpp>
 #include <ParallelPcap/DARPA2009.hpp>
+#include <ParallelPcap/ISOT.hpp>
 #include <ParallelPcap/ReadPcap.hpp>
 #include <ParallelPcap/TestPcap.hpp>
 #include <vector>
@@ -41,17 +42,31 @@ BOOST_PYTHON_MODULE(parallelpcap)
   ;
 
   /**
-   * Adds the Packet2Vec class to our parallelpcap module
+   * Adds the Packet2Vec with DARPA2009 labeler class to our parallelpcap module
    * "return_value_policy" tells boost that our methods are returning pointers
    */
-  class_<Packet2Vec>("Packet2Vec", 
+  class_<Packet2Vec<DARPA2009>>("Packet2Vec_DARPA2009", 
     init<numpy::ndarray&, std::string, bool>())
       .def(init<std::string, bool>())
-      .def("generateX", &Packet2Vec::generateX)
-      .def("generateY", &Packet2Vec::generateY)
-      .def("generateXTokens", &Packet2Vec::generateXTokens)
-      .def("attacks", &Packet2Vec::attacks)
+      .def("generateX", &Packet2Vec<DARPA2009>::generateX)
+      .def("generateY", &Packet2Vec<DARPA2009>::generateY)
+      .def("generateXTokens", &Packet2Vec<DARPA2009>::generateXTokens)
+      .def("attacks", &Packet2Vec<DARPA2009>::attacks)
   ;
+
+  /**
+   * Adds the Packet2Vec with ISOT labeler class to our parallelpcap module
+   * "return_value_policy" tells boost that our methods are returning pointers
+   */
+  class_<Packet2Vec<ISOT>>("Packet2Vec_ISOT", 
+    init<numpy::ndarray&, std::string, bool>())
+      .def(init<std::string, bool>())
+      .def("generateX", &Packet2Vec<ISOT>::generateX)
+      .def("generateY", &Packet2Vec<ISOT>::generateY)
+      .def("generateXTokens", &Packet2Vec<ISOT>::generateXTokens)
+      .def("attacks", &Packet2Vec<ISOT>::attacks)
+  ;
+
 
   class_<ReadPcap>("ReadPcap", 
     init<std::string, list&, size_t, std::string, bool>())

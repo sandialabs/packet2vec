@@ -3,7 +3,7 @@ import os
 import re
 import h5py
 import datetime 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from common import natural_keys
 
 def load_features(data_dir):
@@ -17,6 +17,7 @@ def load_features(data_dir):
         Path to the token vectors and Word2Vec model
     """
     save_dir = os.path.join(data_dir, 'embeddings_model')
+    print("save_dir", save_dir)
 
     # Loading the embeddings
     with tf.device('/cpu:0'):
@@ -25,6 +26,8 @@ def load_features(data_dir):
             new_saver = tf.train.import_meta_graph(os.path.join(save_dir, 'embeddings_model.meta'))
             embeddings = graph.get_tensor_by_name('embeddings:0')
             norm = graph.get_tensor_by_name('norm:0')
+            print("type embeddings", type(embeddings), "shape", embeddings.shape)
+            print("type norm", type(norm), "shape", norm.shape)
             normalized_embeddings = embeddings / norm
 
             with tf.Session(graph=graph) as session:

@@ -1,9 +1,10 @@
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import numpy as np
 import math
 import os
 from embeddings.helpers import is_batch_good, generate_batch
 from six.moves import xrange
+import logging
 
 def update_model(save_dir, integer_tokens, load_dir='',
               batch_size=128, vocab_size=50000, 
@@ -22,6 +23,7 @@ def update_model(save_dir, integer_tokens, load_dir='',
     load_dir : str
         Path to the previously trained model
     """
+    logging.debug("Updating word2vec model.")
     # Handle loading a new model
     if load_dir == '':
         load_dir = save_dir
@@ -92,6 +94,7 @@ def new_model(save_dir, integer_tokens, batch_size=128,
     integer_tokens : str
         Path to the 1D token vectors
     """
+    logging.debug("Creating word2vec model.")
     # Create TF graph
     with tf.device('/gpu:0'):
         graph =  tf.Graph()

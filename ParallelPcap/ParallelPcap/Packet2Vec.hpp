@@ -24,11 +24,12 @@ namespace p = boost::python;
 
 namespace parallel_pcap {
 
+template <typename Labeler>
 class Packet2Vec
 {
 
 private:
-  DARPA2009 darpa;
+  Labeler labeler;
 
   np::ndarray X;
   np::ndarray y;
@@ -38,22 +39,24 @@ private:
   void assignLabel(Pcap const &pcap, p::ssize_t i);
   
   // Figure these out
-  static np::ndarray convertToVector(np::ndarray &embeddings, std::vector<size_t>& ngrammedPacket);
+  static np::ndarray convertToVector(np::ndarray &embeddings, 
+                                      std::vector<size_t>& ngrammedPacket);
 
 public:
   /**
    * Constructor. Initializes the member variables required to generate X and Y matrices
    * \param embeddings A numpy array that has the embeddings.
-   * \param darpafile The file with the label info.
+   * \param labelfile The file with the label info.
+   * \bool debug Whether debugging is turned on.
    */
-  Packet2Vec(np::ndarray &_embeddings, std::string darpafile, bool debug) :
-    darpa(DARPA2009(darpafile)), 
+  Packet2Vec(np::ndarray &_embeddings, std::string labelfile, bool debug) :
+    labeler(Labeler(labelfile)), 
     X(np::array(p::list())), 
     y(np::array(p::list())), 
     embeddings(_embeddings), msg(debug) { }
 
-  Packet2Vec(std::string darpafile, bool debug) : 
-    darpa(DARPA2009(darpafile)),
+  Packet2Vec(std::string labelfile, bool debug) : 
+    labeler(Labeler(labelfile)),
     X(np::array(p::list())),
     y(np::array(p::list())),
     embeddings(np::array(p::list())), msg(debug) { }
@@ -87,7 +90,9 @@ public:
    * \param tokens A python list of tokens to translate to embeddings.
    * \param Returns an numpy ndarray with the feature vector.
    */
-  static np::ndarray translateX(np::ndarray &embeddings, std::vector<std::vector<size_t>> &tokens, bool debug);
+  static np::ndarray translateX(np::ndarray &embeddings, 
+                                std::vector<std::vector<size_t>> &tokens, 
+                                bool debug);
 
   /**
    * Returns the constructed y ndarray.  It reads the pcap object file.  The 
@@ -95,7 +100,7 @@ public:
    * testing.
    * \param pcapFile The path location of the the pcap object file.
    */
-  static np::ndarray translateY(Pcap const &pcap, DARPA2009 &darpa, bool debug); 
+  static np::ndarray translateY(Pcap const &pcap, Labeler &labeler, bool debug); 
 
   /**
    * Returns the constructed y ndarray.  It reads the pcap object file.  The 
@@ -111,8 +116,9 @@ public:
   p::list attacks(std::string pcapFile);
   
 };
-                 
-np::ndarray Packet2Vec::convertToVector(
+
+template <typename Labeler>                 
+np::ndarray Packet2Vec<Labeler>::convertToVector(
   np::ndarray &embeddings, 
   std::vector<size_t>& ngrammedPacket
 ) {
@@ -150,7 +156,8 @@ np::ndarray Packet2Vec::convertToVector(
   return allwordvec;
 }
 
-void Packet2Vec::assignLabel(Pcap const &pcap, p::ssize_t i)
+template <typename Labeler>                 
+void Packet2Vec<Labeler>::assignLabel(Pcap const &pcap, p::ssize_t i)
 {
   PacketHeader pkthdr = pcap.getPacketHeader(i);
   std::vector<unsigned char> pkt = pcap.getPacket(i);
@@ -159,14 +166,15 @@ void Packet2Vec::assignLabel(Pcap const &pcap, p::ssize_t i)
   PacketInfo packetInfo = PacketInfo::parse_packet(pkthdr.getTimestampSeconds(),
                                                    pkt);
 
-  if (this->darpa.is_danger(packetInfo)) {
+  if (this->labeler.is_danger(packetInfo)) {
     this->y[i] = 1;
   } else {
     this->y[i] = 0;
   }
 }
 
-np::ndarray Packet2Vec::generateX(std::string token_path)
+template <typename Labeler>
+np::ndarray Packet2Vec<Labeler>::generateX(std::string token_path)
 {
   std::vector<std::vector<size_t>> packets;
   {
@@ -209,11 +217,12 @@ np::ndarray Packet2Vec::generateX(std::string token_path)
   return this->X;
 }
 
-np::ndarray Packet2Vec::translateX(
+template <typename Labeler>
+np::ndarray Packet2Vec<Labeler>::translateX(
   np::ndarray &embeddings, 
   std::vector<std::vector<size_t>> &packets,
-  bool debug
-) {
+  bool debug) 
+{
   Messenger msg(debug);
   // Number of packets should be the size of the 
   // outside token vector
@@ -255,7 +264,8 @@ np::ndarray Packet2Vec::translateX(
   return X;
 }
 
-np::ndarray Packet2Vec::generateXTokens(std::string token_path) 
+template <typename Labeler>
+np::ndarray Packet2Vec<Labeler>::generateXTokens(std::string token_path) 
 {
   std::vector<std::vector<size_t>> packets;
   {
@@ -310,7 +320,8 @@ np::ndarray Packet2Vec::generateXTokens(std::string token_path)
   return this->X;
 }
 
-np::ndarray Packet2Vec::generateY(std::string pcapFile)
+template <typename Labeler>
+np::ndarray Packet2Vec<Labeler>::generateY(std::string pcapFile)
 {
   // Restore pcap from file
   Pcap restoredPcap;
@@ -338,7 +349,8 @@ np::ndarray Packet2Vec::generateY(std::string pcapFile)
   return this->y;
 }
 
-np::ndarray Packet2Vec::translateY(Pcap const &pcap, DARPA2009 &darpa, bool debug) 
+template <typename Labeler>                 
+np::ndarray Packet2Vec<Labeler>::translateY(Pcap const &pcap, Labeler &labeler, bool debug) 
 {
   Messenger msg(debug);
   int numPackets = pcap.getNumPackets();
@@ -354,10 +366,10 @@ np::ndarray Packet2Vec::translateY(Pcap const &pcap, DARPA2009 &darpa, bool debu
     std::vector<unsigned char> pkt = pcap.getPacket(i);
 
     // Refactor packet info to accomodate char vector instead
-    PacketInfo packetInfo = PacketInfo::parse_packet(pkthdr.getTimestampSeconds(),
+    PacketInfo packetInfo=PacketInfo::parse_packet(pkthdr.getTimestampSeconds(),
                                                     pkt);
 
-    if (darpa.is_danger(packetInfo)) {
+    if (labeler.is_danger(packetInfo)) {
       y[i] = 1;
     } else {
       y[i] = 0;
@@ -367,7 +379,8 @@ np::ndarray Packet2Vec::translateY(Pcap const &pcap, DARPA2009 &darpa, bool debu
   return y;
 }
 
-p::list Packet2Vec::attacks(std::string pcapFile) 
+template <typename Labeler>                 
+p::list Packet2Vec<Labeler>::attacks(std::string pcapFile) 
 {
   // Restore pcap from file
   Pcap restoredPcap;
@@ -391,7 +404,7 @@ p::list Packet2Vec::attacks(std::string pcapFile)
     PacketInfo packetInfo = PacketInfo::parse_packet(pkthdr.getTimestampSeconds(),
                                                     pkt);
 
-    l.append(this->darpa.packet_event_type(packetInfo));
+    l.append(this->labeler.packet_event_type(packetInfo));
   }
 
   return l;

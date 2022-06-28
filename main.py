@@ -12,8 +12,10 @@ Usage:
 Options:
     -h, --help                                  Show documentation
     -c <config>, --config <config>              Config file
+    -ll, --loglevel <
 """
-from docopt import docopt
+#from docopt import docopt
+import argparse
 import yaml
 import os
 import pcaps.process as pp
@@ -123,19 +125,55 @@ def run(args):
 
 if __name__ == '__main__':
     # Parse arguments and call appropriate method
-    docargs = docopt(__doc__)
+    #docargs = docopt(__doc__)
 
     # Program modes
-    modes = {
-        'run': run,
-        'tokens': tokens,
-        'embeddings': embeddings,
-        'features': features,
-        'classifiers': classifiers
-    }
+    #modes = {
+    #    'run': run,
+    #    'tokens': tokens,
+    #    'embeddings': embeddings,
+    #    'features': features,
+    #    'classifiers': classifiers
+    #}
 
-    f = modes[[mode for mode in modes if docargs[mode]][0]]
-    c = docargs['--config']
+    #f = modes[[mode for mode in modes if docargs[mode]][0]]
+    #c = docargs['--config']
+
+    message = "Runs packet2vec."
+    parser = argparse.ArgumentParser(message,
+      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    
+    parser.add_argument("--loglevel", help="The log level.",
+                      choices=["critical", "error", "warning", "info", "debug"],
+                      default="error")
+
+    parser.add_argument("phase", help="What phase to run.",
+      choices=["run", "tokens", "embeddings", "features", "classifiers"])
+
+    parser.add_argument("-c", help="Config file location.", type=str,
+
+
+
+    if 'loglevel' in FLAGS:
+        if  FLAGS.loglevel == "critical":
+            logging.basicConfig(level=logging.CRITICAL,
+                                format="%(levelname)s:%(filename)s.%(funcName)s:%(message)s")
+        elif  FLAGS.loglevel == "error":
+            logging.basicConfig(level=logging.ERROR,
+                                format="%(levelname)s:%(filename)s.%(funcName)s:%(message)s")
+        elif  FLAGS.loglevel == "warning":
+            logging.basicConfig(level=logging.WARNING,
+                                format="%(levelname)s:%(filename)s.%(funcName)s:%(message)s")
+        elif  FLAGS.loglevel == "info":
+            logging.basicConfig(level=logging.INFO,
+                                format="%(levelname)s:%(filename)s.%(funcName)s:%(message)s")
+        elif  FLAGS.loglevel == "debug":
+            logging.basicConfig(level=logging.DEBUG,
+                                format="%(levelname)s:%(filename)s.%(funcName)s:%(message)s")
+        else:
+            raise  Exception("Unknown debug level: "  +  str(FLAGS.loglevel))
+
+
 
     with open(c, 'r') as yml:
         args = yaml.safe_load(yml)

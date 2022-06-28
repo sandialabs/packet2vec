@@ -17,17 +17,20 @@ namespace parallel_pcap {
 
 class PacketInfo {
 public:
-  PacketInfo(unsigned int protocol, std::string sourceIp, unsigned int sourcePort, 
-    std::string destIp, unsigned int destPort, unsigned int startTime);
+  PacketInfo(unsigned int protocol, 
+             std::string sourceIp, unsigned int sourcePort, 
+             std::string destIp, unsigned int destPort, 
+             unsigned int startTime);
   ~PacketInfo();
   
   /**
    * Returns a PacketInfo object.  Parses the supplied packet data.
-   * \param pkthdr A integer packet header.
+   * \param pkthdr An integer packet header.
    * \param packetVector A vector of chars representing the packet.
    * \param Returns a PacketInfo object.
    */
-  static PacketInfo parse_packet(unsigned int pkthdr, std::vector<unsigned char> const &packetVector);
+  static PacketInfo parse_packet(unsigned int pkthdr, 
+                               std::vector<unsigned char> const &packetVector);
 
   unsigned int getProtocol() { return this->protocol; }
   std::string getSourceIp() { return this->sourceIp; }
@@ -54,7 +57,8 @@ PacketInfo::PacketInfo(
 
 PacketInfo::~PacketInfo() { }
 
-PacketInfo PacketInfo::parse_packet(unsigned int timestamp, std::vector<unsigned char> const &packetVector)
+PacketInfo PacketInfo::parse_packet(unsigned int timestamp, 
+                                 std::vector<unsigned char> const &packetVector)
 {
   // Convert vector to char array
   unsigned const char* packet = &packetVector[0];
@@ -85,11 +89,13 @@ PacketInfo PacketInfo::parse_packet(unsigned int timestamp, std::vector<unsigned
     destIp = destIpString;
 
     if (ipHeader->ip_p == IPPROTO_TCP) {
-      tcpHeader = (tcphdr*)(packet + sizeof(struct ether_header) + sizeof(struct ip));
+      tcpHeader = (tcphdr*)(packet + sizeof(struct ether_header) + 
+                            sizeof(struct ip));
       sourcePort = ntohs(tcpHeader->source);
       destPort = ntohs(tcpHeader->dest);
     } else if (ipHeader->ip_p == IPPROTO_UDP) {
-      udpHeader = (udphdr*)(packet + sizeof(struct ether_header) + sizeof(struct ip));
+      udpHeader = (udphdr*)(packet + sizeof(struct ether_header) + 
+                            sizeof(struct ip));
       sourcePort = ntohs(udpHeader->source);
       destPort = ntohs(udpHeader->dest);
     } else if (ipHeader->ip_p == IPPROTO_ICMP) {

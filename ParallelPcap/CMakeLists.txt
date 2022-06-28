@@ -4,7 +4,7 @@ cmake_minimum_required (VERSION 2.8.12)
 ENABLE_LANGUAGE(CXX)
 
 # This optimization level will vectorize loops
-set(GCC_COVERAGE_COMPILE_FLAGS "-g -O2 -std=c++11 -pthread -Wl,--no-as-needed -ftree-vectorize -msse2 -fopt-info-vec-optimized")
+set(GCC_COVERAGE_COMPILE_FLAGS "-g -O2 -std=c++14 -pthread -Wl,--no-as-needed -ftree-vectorize -msse2 -fopt-info-vec-optimized")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
 
 find_package(Threads)
@@ -53,3 +53,36 @@ foreach(exeSrc ${EXE_SRCS})
   set_target_properties(${exeName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "bin")
 
 endforeach(exeSrc)
+
+############################## Testing ######################
+enable_testing()
+
+file (GLOB TEST_SRCS test/*.cpp)
+
+foreach(testSrc ${TEST_SRCS})
+  get_filename_component(testName ${testSrc} NAME_WE)
+
+  #if (UNIX)
+  #  if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  #    message( STATUS "-DBOOST_TEST_DYN_LINK " )
+  #    add_definitions(-DBOOST_TEST_DYN_LINK)
+  #  endif()
+  #endif (UNIX)
+  add_executable(${testName} ${testSrc})
+
+  #target_link_libraries(${testName} pthread)
+  #target_link_libraries(${testName} ${ZMQ_LIBRARIES})
+  target_link_libraries(${testName} ParallelPcapLib)
+  target_link_libraries(${testName} ${Boost_LIBRARIES})
+  target_link_libraries(${testName} ${PYTHON_LIBRARY})
+  #target_link_libraries(${testName} ${PROTOBUF_LIBRARIES})
+  #target_link_libraries(${testName} ProtoLib)
+  #target_link_libraries(${testName} proto ${PROTOBUF_LIBRARY})
+
+  set_target_properties(${testName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "tests")
+
+  add_test(NAME ${testName} 
+           WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests
+           COMMAND ${CMAKE_BINARY_DIR}/tests/${testName})
+endforeach(testSrc)
+ 
