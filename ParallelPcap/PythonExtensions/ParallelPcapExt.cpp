@@ -36,7 +36,7 @@ BOOST_PYTHON_MODULE(parallelpcap)
   class_<PacketHeader>("PacketHeader", 
     init<uint32_t, uint32_t, uint32_t, uint32_t>())
       .def("getTimestampSeconds", &PacketHeader::getTimestampSeconds)
-      .def("getTimestampUseconds", &PacketHeader::getTimestampUseconds)
+      .def("getTimestampUseconds", &PacketHeader::getTimestampUSeconds)
       .def("getIncludedLength", &PacketHeader::getIncludedLength)
       .def("getOriginalLength", &PacketHeader::getOriginalLength)
   ;

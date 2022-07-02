@@ -15,34 +15,46 @@
 
 namespace parallel_pcap {
 
+/**
+ * Class to represent identifying information of a packet.
+ */
 class PacketInfo {
 public:
+
+  /**
+   * Constructor with all the parameters considered sufficient to identify
+   * a packet.
+   */
   PacketInfo(unsigned int protocol, 
              std::string sourceIp, unsigned int sourcePort, 
              std::string destIp, unsigned int destPort, 
-             unsigned int startTime);
+             uint32_t seconds, uint32_t useconds);
   ~PacketInfo();
   
   /**
    * Returns a PacketInfo object.  Parses the supplied packet data.
-   * \param pkthdr An integer packet header.
+   * \param uint32_t seconds The number of seconds.
+   * \param uint32_t useconds The number of microseconds.
    * \param packetVector A vector of chars representing the packet.
    * \param Returns a PacketInfo object.
    */
-  static PacketInfo parse_packet(unsigned int pkthdr, 
+  static PacketInfo parse_packet(uint32_t seconds, uint32_t useconds,
                                std::vector<unsigned char> const &packetVector);
 
-  unsigned int getProtocol() { return this->protocol; }
-  std::string getSourceIp() { return this->sourceIp; }
-  unsigned int getSourcePort() { return this->sourcePort; }
-  std::string getDestIp() { return this->destIp; }
-  unsigned int getDestPort() { return this->destPort; }
-  unsigned int getStartTime() { return this->startTime; }
+  unsigned int getProtocol() const { return this->protocol; }
+  std::string getSourceIp() const { return this->sourceIp; }
+  unsigned int getSourcePort() const { return this->sourcePort; }
+  std::string getDestIp() const { return this->destIp; }
+  unsigned int getDestPort() const { return this->destPort; }
+  unsigned int getSeconds() const { return this->seconds; }
+  unsigned int getUSeconds() const { return this->useconds; }
 
 private:
   std::string sourceIp;
   std::string destIp;
-  unsigned int protocol, sourcePort, destPort, startTime;
+  unsigned int protocol, sourcePort, destPort;
+  uint32_t seconds;
+  uint32_t useconds;
 };
 
 PacketInfo::PacketInfo(
@@ -51,15 +63,19 @@ PacketInfo::PacketInfo(
   unsigned int sourcePort, 
   std::string destIp, 
   unsigned int destPort, 
-  unsigned int startTime
-) : protocol(protocol), sourceIp(sourceIp), sourcePort(sourcePort), 
-    destIp(destIp), destPort(destPort), startTime(startTime) { }
+  uint32_t seconds, 
+  uint32_t useconds)
+  : protocol(protocol), sourceIp(sourceIp), sourcePort(sourcePort), 
+    destIp(destIp), destPort(destPort), seconds(seconds),
+    useconds(useconds) { }
 
 PacketInfo::~PacketInfo() { }
 
-PacketInfo PacketInfo::parse_packet(unsigned int timestamp, 
+PacketInfo PacketInfo::parse_packet(uint32_t seconds, uint32_t useconds,
                                  std::vector<unsigned char> const &packetVector)
 {
+  assert(useconds <= 999999); // Make sure useconds is microseconds.
+
   // Convert vector to char array
   unsigned const char* packet = &packetVector[0];
 
@@ -104,7 +120,8 @@ PacketInfo PacketInfo::parse_packet(unsigned int timestamp,
   }
 
   // Create PacketInfo Object
-  return PacketInfo(protocol, sourceIp, sourcePort, destIp, destPort, timestamp);
+  return PacketInfo(protocol, sourceIp, sourcePort, destIp, destPort, 
+                    seconds, useconds);
 }
 
 }

@@ -37,7 +37,7 @@ public:
   }
       
   inline uint32_t getTimestampSeconds() const { return timestampSeconds; }
-  inline uint32_t getTimestampUseconds() const { return timestampUseconds; }
+  inline uint32_t getTimestampUSeconds() const { return timestampUseconds; }
   inline uint32_t getIncludedLength() const { return includedLength; }
   inline uint32_t getOriginalLength() const { return originalLength; } 
 };
@@ -99,8 +99,8 @@ public:
     return header.getTimestampSeconds(); 
   }
   
-  uint32_t getTimestampUseconds() const { 
-    return header.getTimestampUseconds(); 
+  uint32_t getTimestampUSeconds() const { 
+    return header.getTimestampUSeconds(); 
   }
 
   uint32_t getIncludedLength() const { 

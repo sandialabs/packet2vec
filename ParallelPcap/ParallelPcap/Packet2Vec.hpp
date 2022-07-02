@@ -44,7 +44,9 @@ private:
 
 public:
   /**
-   * Constructor. Initializes the member variables required to generate X and Y matrices
+   * Constructor. Initializes the member variables required to generate 
+   * X and Y matrices.
+   *
    * \param embeddings A numpy array that has the embeddings.
    * \param labelfile The file with the label info.
    * \bool debug Whether debugging is turned on.
@@ -164,7 +166,7 @@ void Packet2Vec<Labeler>::assignLabel(Pcap const &pcap, p::ssize_t i)
 
   // Refactor packet info to accomodate char vector instead
   PacketInfo packetInfo = PacketInfo::parse_packet(pkthdr.getTimestampSeconds(),
-                                                   pkt);
+                                      pkthdr.getTimestampUSeconds(), pkt);
 
   if (this->labeler.is_danger(packetInfo)) {
     this->y[i] = 1;
@@ -367,7 +369,7 @@ np::ndarray Packet2Vec<Labeler>::translateY(Pcap const &pcap, Labeler &labeler, 
 
     // Refactor packet info to accomodate char vector instead
     PacketInfo packetInfo=PacketInfo::parse_packet(pkthdr.getTimestampSeconds(),
-                                                    pkt);
+      pkthdr.getTimestampUSeconds(), pkt);
 
     if (labeler.is_danger(packetInfo)) {
       y[i] = 1;
@@ -402,7 +404,7 @@ p::list Packet2Vec<Labeler>::attacks(std::string pcapFile)
 
     // Refactor packet info to accomodate char vector instead
     PacketInfo packetInfo = PacketInfo::parse_packet(pkthdr.getTimestampSeconds(),
-                                                    pkt);
+      pkthdr.getTimestampUSeconds(), pkt);
 
     l.append(this->labeler.packet_event_type(packetInfo));
   }

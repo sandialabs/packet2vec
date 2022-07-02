@@ -45,14 +45,14 @@ public:
     
   ~DARPA2009MaliciousItem() { }
 
-  std::string getEventType() { return this->eventType; }
-  std::string getC2s() { return this->c2s; }
-  std::string getSourceIp() { return this->sourceIp; }
-  std::string getSourcePort() { return this->sourcePort; }
-  std::string getDestIp() { return this->destIp; }
-  std::string getDestPort() { return this->destPort; }
-  time_t getStartTime() { return this->startTime; }
-  time_t getStopTime() { return this->stopTime; }
+  std::string getEventType() const { return this->eventType; }
+  std::string getC2s() const { return this->c2s; }
+  std::string getSourceIp() const { return this->sourceIp; }
+  std::string getSourcePort() const { return this->sourcePort; }
+  std::string getDestIp() const { return this->destIp; }
+  std::string getDestPort() const { return this->destPort; }
+  time_t getStartTime() const { return this->startTime; }
+  time_t getStopTime() const { return this->stopTime; }
 
 private:
   std::string eventType, c2s, sourceIp, sourcePort, destIp, destPort;
@@ -76,7 +76,7 @@ public:
    *                   you want to test.
    * \return Returns a boolean. True if packet is considered malicious.
    */
-  bool is_danger(PacketInfo packetInfo);
+  bool is_danger(PacketInfo const& packetInfo) const;
 
   /**
    * Returns the type of event (e.g. ddos or benign
@@ -84,7 +84,7 @@ public:
    *                   you want to test.
    * \return Returns a string with the event category.
    */
-  std::string packet_event_type(PacketInfo packetInfo);
+  std::string packet_event_type(PacketInfo const& packetInfo) const;
 
 private:
   std::multimap<std::string, DARPA2009MaliciousItem> sourceIpIndex;
@@ -140,7 +140,7 @@ DARPA2009::DARPA2009(std::string filename)
 
 DARPA2009::~DARPA2009() { }
 
-bool DARPA2009::is_danger(PacketInfo packetInfo)
+bool DARPA2009::is_danger(PacketInfo const& packetInfo) const
 {
   if (this->sourceIpIndex.count(packetInfo.getSourceIp())) 
   {
@@ -149,9 +149,9 @@ bool DARPA2009::is_danger(PacketInfo packetInfo)
     for (auto i = range.first; i != range.second; ++i)
     { 
       if (i->second.getDestIp() == packetInfo.getDestIp()
-      && (unsigned long int) packetInfo.getStartTime() >= 
+      && (unsigned long int) packetInfo.getSeconds() >= 
          (unsigned long int) i->second.getStartTime()
-      && (unsigned long int) packetInfo.getStartTime() <= 
+      && (unsigned long int) packetInfo.getSeconds() <= 
          (unsigned long int) i->second.getStopTime()) 
       {
         return true;
@@ -161,7 +161,7 @@ bool DARPA2009::is_danger(PacketInfo packetInfo)
   return false;
 }
 
-std::string DARPA2009::packet_event_type(PacketInfo packetInfo)
+std::string DARPA2009::packet_event_type(PacketInfo const& packetInfo) const
 {
   if (this->sourceIpIndex.count(packetInfo.getSourceIp())) 
   {
@@ -170,9 +170,9 @@ std::string DARPA2009::packet_event_type(PacketInfo packetInfo)
     for (auto i = range.first; i != range.second; ++i)
     { 
       if (i->second.getDestIp() == packetInfo.getDestIp()
-      && (unsigned long int) packetInfo.getStartTime() >= 
+      && (unsigned long int) packetInfo.getSeconds() >= 
          (unsigned long int) i->second.getStartTime()
-      && (unsigned long int) packetInfo.getStartTime() <= 
+      && (unsigned long int) packetInfo.getSeconds() <= 
          (unsigned long int) i->second.getStopTime()) 
       {
         return i->second.getEventType();
