@@ -3,6 +3,7 @@ import numpy as np
 import os
 import struct
 import embeddings.word2vec as w2v
+import logging
 
 def read_data(f):
     """
@@ -46,6 +47,7 @@ def update(output_dir, load_dir, data_dir, vocab_size):
     vocab_size : int
         Word2Vec vocab size
     """
+    logging.info("Updating existing word2vec model.")
     model_save_dir = os.path.join(output_dir, 'embeddings_model')
     if not os.path.isdir(model_save_dir):
         os.makedirs(model_save_dir)
@@ -86,6 +88,7 @@ def create(output_dir, data_dir, vocab_size):
     vocab_size : int
         Word2Vec vocab size
     """
+    logging.info("Creating word2vec model.")
     model_save_dir = os.path.join(output_dir, 'embeddings_model')
     if not os.path.isdir(model_save_dir):
         os.makedirs(model_save_dir)
