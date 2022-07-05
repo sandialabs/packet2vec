@@ -1,5 +1,6 @@
 import time
 from contextlib import ContextDecorator
+import os
 
 class timer(ContextDecorator):
     def __init__(self, label):
@@ -25,3 +26,7 @@ def atoi(text):
   
 def natural_keys(text):
     return [ atoi(c) for c in re.split('(\d+)', text) ]
+
+def check_path(path):
+    if not os.path.exists(path):
+        raise FileNotFoundError("Path does not exist: " + path) 

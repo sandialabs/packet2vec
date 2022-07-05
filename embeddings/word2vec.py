@@ -176,3 +176,4 @@ def new_model(save_dir, integer_tokens, batch_size=128,
                 saver.save(session, os.path.join(save_dir, 'embeddings_model'))
 
                 return final_embeddings
+

@@ -4,7 +4,7 @@ import re
 import h5py
 import datetime 
 import tensorflow as tf
-from common import natural_keys
+from common import natural_keys, check_path
 
 def load_features(data_dir):
     """
@@ -22,7 +22,8 @@ def load_features(data_dir):
     with tf.device('/cpu:0'):
         graph = tf.Graph()
         with graph.as_default():
-            new_saver = tf.train.import_meta_graph(os.path.join(save_dir, 'embeddings_model.meta'))
+            new_saver = tf.train.import_meta_graph(os.path.join(save_dir, 
+              'embeddings_model.meta'))
             embeddings = graph.get_tensor_by_name('embeddings:0')
             norm = graph.get_tensor_by_name('norm:0')
             normalized_embeddings = embeddings / norm
@@ -49,23 +50,40 @@ def finalize_feature_vectors(output_dir, data_dir, darpa):
         Path to the groundtruth file for the DARPA2009
         dataset for labeling
     """
- 
+
+    check_path(output_dir)
+    check_path(data_dir)
+    check_path(darpa)
+
     final_embeddings = load_features(data_dir)
     p2v = parallelpcap.Packet2Vec(final_embeddings, darpa, False)
 
     intVV = os.path.join(data_dir, 'intVectorVector')
+    check_path(intVV)
     pcaps = os.path.join(data_dir, 'pcaps')
+    check_path(pcaps)
+
     feature_dir = os.path.join(output_dir, 'features')
     if not os.path.isdir(feature_dir):
         os.makedirs(feature_dir)
     
     token_files = os.listdir(intVV)
     for token_file in token_files:
-        pcap_id = token_file.split('_')[1].split('.')[0]
-        pcap_filename = pcap_id + '.bin'
+        pcap_filename = '_'.join(token_file.split('_')[1:])
+        pcap_id = '.'.join(pcap_filename.split('.')[0:-1])
 
+        print("token_file", token_file)
+        print("pcap_filename", pcap_filename)
+        print("pcap_id", pcap_id)
+        print("pcaps", pcaps)
         X = p2v.generateX(os.path.join(intVV, token_file))
-        y = p2v.generateY(os.path.join(pcaps, pcap_filename))
+
+        pcap_path = os.path.join(pcaps, pcap_filename)
+        print(pcap_path)
+        if not os.path.exists(pcap_path):
+          raise FileNotFoundError(f"Path to pcap file {pcap_path}" +
+                                  " does not exist")
+        y = p2v.generateY(pcap_path)
 
         feature_filename = os.path.join(feature_dir, pcap_id + '_features.h5')
         h5f = h5py.File(feature_filename, 'w')
