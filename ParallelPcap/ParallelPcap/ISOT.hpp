@@ -70,6 +70,7 @@ public:
   std::string getDestIp() const { return this->destIp; }
   unsigned int getDestPort() const { return this->destPort; }
 
+  std::string toString() const;
 
   /**
    * Converts the original timestamp, e.g. 2016-12-08T20:40:49.538528Z,
@@ -90,21 +91,53 @@ private:
 
 };
 
+std::string ISOTItem::toString() const
+{
+  std::string s = boost::lexical_cast<std::string>(timestamp) +
+    " " + protocol + " " + sourceIp + " " + 
+    boost::lexical_cast<std::string>(sourcePort) + " " +
+    destIp + " " +  boost::lexical_cast<std::string>(destPort);
+  return s;
+}
 
 unsigned long ISOTItem::calcTimestamp(std::string const& timestamp) const
 {
 
-  std::cout << "timestamp " << timestamp << std::endl;
-  int pos = timestamp.find('.');
-  std::string datetime     = timestamp.substr(0, pos);
-  std::string microseconds = timestamp.substr(pos + 1, 6);
   std::string format = "%Y-%m-%dT%H:%M:%S";
+  //std::cout << "timestamp " << timestamp << std::endl;
+  int pos = timestamp.find('.');
+  std::string datetime;
+  if (pos > 0) {
+    datetime     = timestamp.substr(0, pos);
+  } else {
+    datetime     = timestamp.substr(0, timestamp.length()-1);
+  }
+  //std::cout << "datetime " << datetime << std::endl;
   unsigned long seconds = utc_seconds_from_datetime(datetime, format);
-  std::cout << "microseconds " << microseconds << std::endl;
-  unsigned long ms = seconds * 1000000 + 
+  //std::cout << "seconds " << seconds << std::endl;
+
+  int posZ = timestamp.find_last_of("Z");
+  unsigned long microseconds = 0;
+  if (posZ > 0 && pos > 0) {
+    //std::cout << posZ - pos << std::endl;
+    std::string microseconds_str = timestamp.substr(pos + 1, posZ - pos - 1);
+    //std::cout << "microseconds " << microseconds << std::endl;
+    //std::cout << "pos " << pos << " posZ " << posZ << std::endl;
+    //std::cout << 6 - pos + posZ << std::endl;
+    microseconds = boost::lexical_cast<unsigned long>(microseconds_str);
+    microseconds = microseconds * static_cast<unsigned long>(
+                    pow(10, 6 + pos - posZ + 1));
+    //std::cout << "microseconds " << microseconds << std::endl;
+  } else if (posZ > 0) {
+    microseconds = 0;
+  } else {
+    throw ISOTException("Couldn't parse timestamp: " + timestamp);
+  }
+
+  unsigned long total = seconds * 1000000  + 
     boost::lexical_cast<unsigned long>(microseconds);
 
-  return ms;
+  return total;
 }
 
 class ISOT {
@@ -120,30 +153,25 @@ public:
   bool is_danger(PacketInfo const& packetInfo) const; 
 private:
   
-  unsigned long combinedTime(PacketInfo const& packetInfo) const;
+ std::string getKey(ISOTItem const& item) const;
+ std::string getKey(PacketInfo const& item) const;
+ //unsigned long combinedTime(PacketInfo const& packetInfo) const;
   
-  // Mapping from timestamp as a string to the ISOT item
-  std::map<long, ISOTItem> time2item;
+  // Mapping from timestamp and four tuple of sourceIP, source port,
+  // dest IP, dest port as a string to the ISOT item.
+  std::map<std::string, ISOTItem> item_map;
 
 };
 
-unsigned long ISOT::combinedTime(PacketInfo const& packetInfo) const
-{
-  unsigned long micro_since_epoch = static_cast<long>(
-    packetInfo.getSeconds()) *1000000 
-    + static_cast<long>(packetInfo.getUSeconds());
-  return micro_since_epoch;
-}
-
 std::string ISOT::packet_event_type(PacketInfo const& packetInfo) const
 {
-  unsigned long micro_since_epoch = combinedTime(packetInfo);
-  auto search = time2item.find(micro_since_epoch);
-  if (search != time2item.end()) {
-    ISOTItem const& item = time2item.at(micro_since_epoch);
+  std::string key = getKey(packetInfo);
+  auto search = item_map.find(key);
+  if (search != item_map.end()) {
+    ISOTItem const& item = item_map.at(key);
     return item.getClassification();
   } else {
-    std::cout << "Couldn't find item for time " <<micro_since_epoch <<std::endl;
+    std::cout << "Couldn't find item for time " << key <<std::endl;
     return "";
   }
 }
@@ -159,7 +187,10 @@ bool ISOT::is_danger(PacketInfo const& packetInfo) const
     return false;
   } else
   {
-    throw ISOTException("Unknown ISOT event type: " + type);
+    std::cout << "Warning: Unknown ISOT event type: " 
+      << type << ", from packet " << packetInfo.toString() << std::endl;
+    //throw ISOTException("Unknown ISOT event type: " + type);
+    return false;
   }
 }
 
@@ -185,12 +216,16 @@ ISOT::ISOT(std::string filename)
   // The first line should be a list of column names
   std::string temp;
   std::getline(csv, temp, '\n'); 
+#ifdef DEBUG
   std::cout << "first line " << temp << std::endl;
+#endif
 
   int i = 1;
   while (csv.good() && !csv.eof())
   {
+#ifdef DEBUG
     std::cout << "i " << i << std::endl;
+#endif
     std::getline(csv, dateTime, ',');
     std::getline(csv, protocol, ',');
     std::getline(csv, sourceIp, ',');
@@ -220,13 +255,14 @@ ISOT::ISOT(std::string filename)
 
     if (the_end) continue;
       
-
+#ifdef DEBUG
     std::cout << "dateTime " << dateTime << std::endl;
     std::cout << "classification " << classification << std::endl;
     std::cout << "sourcePort " << sourcePort << std::endl;
     std::cout << "destPort " << destPort << std::endl;
-
     std::cout << "Creating item " << std::endl;
+#endif
+
     ISOTItem item(classification,
                   dateTime, 
                   protocol,
@@ -235,23 +271,52 @@ ISOT::ISOT(std::string filename)
                   destIp,
                   boost::lexical_cast<unsigned int>(destPort));
 
-    unsigned long timestamp = item.getTimestamp();
+    std::string key = getKey(item);
+    std::cout << "item " << item.toString() << std::endl;
 
-    if (time2item.count(timestamp) > 0)
+    if (item_map.count(key) > 0)
     {
-      std::cout << "blah " << std::endl;
-      throw ISOTException("Found a row in the label file that has a time"
-        "stamp that has been seen before: " + 
-        boost::lexical_cast<std::string>(timestamp));     
+      if (classification != item_map[key].getClassification())
+      {  
+        std::cout << "Found a duplicate key with different classification:  " 
+          << key << " " << item.toString() << std::endl;
+      }
+      //throw ISOTException("Found a row in the label file that has a time"
+      //  "stamp that has been seen before: " + 
+      //  boost::lexical_cast<std::string>(timestamp));     
     } else
     {
-      time2item[timestamp] = item;
+      item_map[key] = item;
     }
     i++;
   }
   csv.close();
   std::cout << "Done processing file." << std::endl;
 }
+
+std::string ISOT::getKey(ISOTItem const& item) const
+{
+  std::string key = boost::lexical_cast<std::string>(item.getTimestamp()) +
+    item.getSourceIp() + boost::lexical_cast<std::string>(item.getSourcePort())+
+    item.getDestIp() + boost::lexical_cast<std::string>(item.getDestPort());
+  return key;
+}
+
+std::string ISOT::getKey(PacketInfo const& packetInfo) const
+{
+  unsigned long micro_since_epoch = static_cast<long>(
+    packetInfo.getSeconds()) *1000000 
+    + static_cast<long>(packetInfo.getUSeconds());
+
+  std::string key = boost::lexical_cast<std::string>(micro_since_epoch) +
+    packetInfo.getSourceIp() + 
+    boost::lexical_cast<std::string>(packetInfo.getSourcePort()) +
+    packetInfo.getDestIp() + 
+    boost::lexical_cast<std::string>(packetInfo.getDestPort());
+
+  return key;
+}
+
 
 
 } // end parallel_pcap namespace

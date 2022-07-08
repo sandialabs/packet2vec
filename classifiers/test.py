@@ -59,7 +59,8 @@ def test_classifier(output_dir, data_dir, test_data, classifier, darpafile, num_
     clf = joblib.load(classifier)
 
     # Loading the dictionary
-    testpcap = parallelpcap.TestPcap(os.path.join(data_dir, 'dict/dictionary.bin'), 
+    testpcap = parallelpcap.TestPcap(os.path.join(data_dir, 
+                                     'dict/dictionary.bin'), 
                                      final_embeddings, [2], darpafile, False)
 
     test_files = [os.path.join(test_data, f) for f in os.listdir(test_data)]
@@ -72,34 +73,38 @@ def test_classifier(output_dir, data_dir, test_data, classifier, darpafile, num_
         X = testpcap.featureVector(f)
         y = testpcap.labelVector()
 
-        y_hat = clf.predict_proba(X)[:,1]
-        y_hat_bin = clf.predict(X)
+        if len(X) > 0:
 
-        tn, fp, fn, tp = confusion_matrix(y, y_hat_bin, labels=[0,1]).ravel()
-        report.write("File: " + str(f) + "\n")
-        report.write("Confusion Matrix (TN, FP, FN, TP): " + str(tn) + " " + 
-                     str(fp) + " " + str(fn) + " " + str(tp) + "\n")
+            y_hat = clf.predict_proba(X)[:,1]
+            y_hat_bin = clf.predict(X)
 
-        if 1 in y:
-            scores = roc_auc_score(y, y_hat)
-            f1 = f1_score(y, y_hat_bin)
-            precision, recall, thresholds = precision_recall_curve(y, y_hat)
-            ave_precision = average_precision_score(y, y_hat)
-            pr_auc = auc(recall, precision)
-            print("ROC AUC Score: ", scores)
-            print("Precision/Recall AUC Score: ", pr_auc)
-            print("Average precision: ", ave_precision) 
-            print("F1 Score: ", f1)
-            report.write("ROC AUC Score: " + str(scores) + "\n")
-            report.write("F1 Score: " + str(f1) + "\n")
-            report.write("Precision/Recall AUC Score: " + str(pr_auc) + "\n")
-            report.write("Average precision: " + str(ave_precision) + "\n")
+            tn, fp, fn, tp = confusion_matrix(y, y_hat_bin, labels=[0,1]).ravel()
+            report.write("File: " + str(f) + "\n")
+            report.write("Confusion Matrix (TN, FP, FN, TP): " + str(tn) + " " + 
+                         str(fp) + " " + str(fn) + " " + str(tp) + "\n")
 
-        report.write("========\n")
+            if 1 in y:
+                scores = roc_auc_score(y, y_hat)
+                f1 = f1_score(y, y_hat_bin)
+                precision, recall, thresholds = precision_recall_curve(y, y_hat)
+                ave_precision = average_precision_score(y, y_hat)
+                pr_auc = auc(recall, precision)
+                print("ROC AUC Score: ", scores)
+                print("Precision/Recall AUC Score: ", pr_auc)
+                print("Average precision: ", ave_precision) 
+                print("F1 Score: ", f1)
+                report.write("ROC AUC Score: " + str(scores) + "\n")
+                report.write("F1 Score: " + str(f1) + "\n")
+                report.write("Precision/Recall AUC Score: " + str(pr_auc) + "\n")
+                report.write("Average precision: " + str(ave_precision) + "\n")
 
-        all_predictions.extend(y_hat)
-        all_labels.extend(y)
-        all_bin_preds.extend(y_hat_bin)
+            report.write("========\n")
+
+            all_predictions.extend(y_hat)
+            all_labels.extend(y)
+            all_bin_preds.extend(y_hat_bin)
+        else:
+          print("Nothing in file.")
 
     all_roc_auc_score = roc_auc_score(all_labels, all_predictions)
     precision, recall, thresholds = precision_recall_curve(all_labels, 

@@ -11,7 +11,26 @@ from sklearn.kernel_approximation import RBFSampler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.class_weight import compute_class_weight
 
-def randomForestClassifier(data, output_dir, n_estimators=10):
+def train_step(clf, X, y, trained_once, found, n_estimators):
+
+  non_zeros = np.count_nonzero(y)
+  zeros = y.size - non_zeros
+  if non_zeros > 0:
+    found = True
+  print(f"Shape X {X.shape}")
+  print(f"Shape y {y.shape}")
+  print(f"Number of 0's: {zeros}")
+  print(f"Number of 1's: {non_zeros}")
+   
+  if trained_once:
+      clf.n_estimators += n_estimators
+
+  clf.fit(X, y)
+  return clf, found
+
+
+def randomForestClassifier(data, output_dir, n_estimators=10, 
+                           max_examples=100000):
     """
     Trains a Random Forest classifier on the data 
     generated in the 'features' step.
@@ -33,12 +52,68 @@ def randomForestClassifier(data, output_dir, n_estimators=10):
                                  n_estimators=n_estimators)
 
     found = False
+    trained_once = False
+    data_not_utilized = False
+
+    X = None
+    y = None
+
+    i = 0 
+    while i < len(feature_files):
+
+        if X is None:
+            with h5py.File(feature_files[0], 'r') as hf:
+                X = np.zeros((0, hf['vectors'][:].shape[1]))
+                y = np.zeros((0,))
+
+        print(f"Processing file {feature_files[i]}")
+        with h5py.File(feature_files[i], 'r') as hf:
+            X1 = hf['vectors'][:]
+            y1 = hf['labels'][:]
+            X = np.concatenate((X, X1))
+            y = np.concatenate((y, y1))
+            print(f"Shape X {X.shape}")
+            print(f"Shape y {y.shape}")
+            #non_zeros = np.count_nonzero(y1)
+            #zeros = y.size - non_zeros
+            #if non_zeros > 0:
+            #  found = True
+            #print(f"Shape X1 {X1.shape}")
+            #print(f"Shape y1 {y1.shape}")
+            #print(f"Number of 0's: {zeros}")
+            #print(f"Number of 1's: {non_zeros}")
+
+        if len(X) > max_examples:
+            clf, found = train_step(clf, X, y, trained_once, found, n_estimators)
+            trained_once = True
+            data_not_utilized = False
+            X = None
+            y = None
+        else:
+            data_not_utilized = True
+
+        i += 1
+    
+    if data_not_utilized:
+      clf, found = train_step(clf, X, y, trained_once, found, n_estimators)
+
+        
+
+    """
     for i, f in enumerate(feature_files):
         print("Training RFC on file {} of {}".format(i + 1, len(feature_files)))
         
         with h5py.File(f, 'r') as hf:
+             
             X = hf['vectors'][:]
             y = hf['labels'][:]
+            print(X.shape)
+            print(y.shape)
+
+        zeros = np.count_nonzero(y)
+        non_zeros = y.size - zeros
+        print(f"Number of 0's: {zeros}")
+        print(f"Number of 1's: {non_zeros}")
 
         # Ignore files where there are no 
         # malicious samples
@@ -52,6 +127,7 @@ def randomForestClassifier(data, output_dir, n_estimators=10):
             clf.n_estimators += n_estimators
         
         clf.fit(X, y)
+    """
 
     if not found:
       raise Exception("Didn't find any malicious examples in the training" +

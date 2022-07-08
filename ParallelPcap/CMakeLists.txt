@@ -4,7 +4,7 @@ cmake_minimum_required (VERSION 2.8.12)
 ENABLE_LANGUAGE(CXX)
 
 # This optimization level will vectorize loops
-set(GCC_COVERAGE_COMPILE_FLAGS "-g -O2 -std=c++14 -pthread -Wl,--no-as-needed -ftree-vectorize -msse2 -fopt-info-vec-optimized")
+set(GCC_COVERAGE_COMPILE_FLAGS "-g -O2 -std=c++14 -pthread -Wl,--no-as-needed -ftree-vectorize -msse2 -fopt-info-vec-optimized -DDEBUG")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
 
 find_package(Threads)

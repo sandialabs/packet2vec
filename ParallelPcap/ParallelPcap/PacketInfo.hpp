@@ -49,6 +49,8 @@ public:
   unsigned int getSeconds() const { return this->seconds; }
   unsigned int getUSeconds() const { return this->useconds; }
 
+  std::string toString() const;
+
 private:
   std::string sourceIp;
   std::string destIp;
@@ -70,6 +72,18 @@ PacketInfo::PacketInfo(
     useconds(useconds) { }
 
 PacketInfo::~PacketInfo() { }
+
+std::string PacketInfo::toString() const
+{
+  std::string s = "Protocol " + boost::lexical_cast<std::string>(protocol) + 
+    " sourceIp " + sourceIp + 
+    " sourcePort " + boost::lexical_cast<std::string>(sourcePort) +
+    " destIp " + destIp +
+    " destPort " + boost::lexical_cast<std::string>(destPort) +
+    " seconds " + boost::lexical_cast<std::string>(seconds) +
+    " useconds " + boost::lexical_cast<std::string>(useconds);
+  return s;
+}
 
 PacketInfo PacketInfo::parse_packet(uint32_t seconds, uint32_t useconds,
                                  std::vector<unsigned char> const &packetVector)

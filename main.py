@@ -104,7 +104,7 @@ def classifiers(args):
       with timer("Testing Random Forest"):
         clf = os.path.join(args['working'], 'classifiers', 'rfc.joblib')
         test.test_classifier(args['working'], args['working'], 
-                   args['test_data'], clf, args['darpa'], 
+                   args['test_data'], clf, args['labels'], 
                    args['options']['threads'])
 
 

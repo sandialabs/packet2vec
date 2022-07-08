@@ -103,7 +103,12 @@ void createCandidates(std::vector<uint64_t>& candidates,
                       uint32_t firstTimestamp,
                       size_t threadId)
 {
-  for (uint64_t i = beg; i < beg + snaplen; i++)
+ 
+  uint64_t end_of_packet = snaplen + beg;
+  if (end_of_packet > end) {
+    end_of_packet = end;
+  }
+  for (uint64_t i = beg; i < end_of_packet; i++)
   {
     uint32_t timestamp = (*transformUnsigned32)(&packetData[i]);
     if (timestamp >= firstTimestamp) {
@@ -149,6 +154,7 @@ void createCandidates(std::vector<uint64_t>& candidates,
   }
 
   if (candidates.size() < 1) {
+    std::cout << "Couldn't find data in the associated pcap file. " << std::endl;
     std::string message = "Trying to find the start of a packet in thread " +
       boost::lexical_cast<std::string>(threadId) + "'s data range was " + 
       "unsucessful.  Didn't find any candidates.";
@@ -242,6 +248,7 @@ inline void Pcap::setRestored(bool restored)
 inline Pcap::Pcap(std::string const& filename)//, size_t numThreads) 
 {
   this->restored = false;
+  std::cout << "Processing pcap file " << filename << std::endl;
   readFile(filename);
 }
 
@@ -289,6 +296,9 @@ inline void Pcap::readFile(std::string const& filename)
 
 inline void Pcap::readHeader(unsigned char* data)
 {
+#ifdef DEBUG
+  std::cout << "Reading header" << std::endl;
+#endif
   // this->data should have been populated by now.
   
   // Looking at the magic number to determine which byte converter to use.
@@ -330,6 +340,9 @@ inline void Pcap::readHeader(unsigned char* data)
 
 inline void Pcap::readPackets(unsigned char* data)
 {
+#ifdef DEBUG
+  std::cout << "Reading packets" << std::endl;
+#endif
   unsigned char* packetData = data + PACKET_DATA_POS;
   uint64_t numPacketBytes = numBytes - PACKET_DATA_POS;
 
@@ -344,9 +357,12 @@ inline void Pcap::readPackets(unsigned char* data)
   {
     uint64_t beg = getBeginIndex(numPacketBytes, threadId, mythreadCount);
     uint64_t end = getEndIndex(numPacketBytes, threadId, mythreadCount);
-    //std::cout << "threadId " << threadId << " mythreadCount " 
-    //          << mythreadCount << " numPacketBytes "
-    //          << numPacketBytes << std::endl;
+#ifdef DEBUG
+    std::cout << "threadId " << threadId << " mythreadCount " 
+              << mythreadCount << " numPacketBytes "
+              << numPacketBytes << " beg " << beg 
+              << " end " << end << std::endl;
+#endif
 
     // We go through the first part of the data and find candidates
     // of what we think could be timestamps (i.e. the begining of a
@@ -371,34 +387,36 @@ inline void Pcap::readPackets(unsigned char* data)
     //  throw PcapException(message);
     //}
 
-    // Go through the first snaplen part of packetData, and see which of the 
-    // the bytes could possibly be the start of a packet.  
-    details::createCandidates(candidates, numDesired, beg, end, snaplen, 
-                      this->transformUnsigned32, packetData,
-                      firstTimestamp, threadId);
+    try {
+      // Go through the first snaplen part of packetData, and see which of the 
+      // the bytes could possibly be the start of a packet.  
+      details::createCandidates(candidates, numDesired, beg, end, snaplen, 
+                        this->transformUnsigned32, packetData,
+                        firstTimestamp, threadId);
 
-    // Check to make sure the first candidate explains the rest and that we
-    // don't have multiple candidates to choose from.  Throws an exception
-    // if the sequence is off.
-    details::checkSequence(candidates, this->transformUnsigned32, packetData);
+      // Check to make sure the first candidate explains the rest and that we
+      // don't have multiple candidates to choose from.  Throws an exception
+      // if the sequence is off.
+      details::checkSequence(candidates, this->transformUnsigned32, packetData);
 
-    // Process all the packets
-    uint64_t index = *(candidates.begin());
-    while (index < end) {
-  
-      lock.lock();
-      packets.push_back(Packet(&packetData[index], this->transformUnsigned32));
-      lock.unlock();
-      uint32_t lengthPacket = (*this->transformUnsigned32)
-                              (&packetData[index + 8]);
-      index = index + lengthPacket + 16;
+      // Process all the packets
+      uint64_t index = *(candidates.begin());
+      while (index < end) {
+    
+        lock.lock();
+        packets.push_back(Packet(&packetData[index],this->transformUnsigned32));
+        lock.unlock();
+        uint32_t lengthPacket = (*this->transformUnsigned32)
+                                (&packetData[index + 8]);
+        index = index + lengthPacket + 16;
+      }
+    } catch (PcapException e) {
+      std::cout << "Error with file." << std::endl;
     }
     
   };
 
   
-  bool failed = true;
-
   //size_t mythreadCount = globalNumThreads;
   // Force mythreadCount = 1 
   // Having more threads didn't seem to speed up anything.  Just use one thread
