@@ -31,10 +31,10 @@ def randomForestClassifier(data, output_dir, n_estimators=10):
     
     clf = RandomForestClassifier(warm_start=True,
                                  n_estimators=n_estimators)
-    
+
+    found = False
     for i, f in enumerate(feature_files):
-        if (i + 1) % 10 == 0:
-            print("Training RFC on file {} of {}".format(i + 1, len(feature_files)))
+        print("Training RFC on file {} of {}".format(i + 1, len(feature_files)))
         
         with h5py.File(f, 'r') as hf:
             X = hf['vectors'][:]
@@ -42,12 +42,20 @@ def randomForestClassifier(data, output_dir, n_estimators=10):
 
         # Ignore files where there are no 
         # malicious samples
-        if 1 not in y: continue
+        if 1 not in y:
+          print("Skipping this file because no malicious examples.") 
+          continue
+        else:
+          found = True
 
         if i != 0:
             clf.n_estimators += n_estimators
         
         clf.fit(X, y)
+
+    if not found:
+      raise Exception("Didn't find any malicious examples in the training" +
+        " data")
 
     output_path = os.path.join(output_dir, 'classifiers')
     if not os.path.isdir(output_path):
