@@ -7,7 +7,6 @@
 #include <ParallelPcap/Pcap.hpp>
 #include <ParallelPcap/CountDictionary.hpp>
 #include <ParallelPcap/Packet2Vec.hpp>
-#include <ParallelPcap/DARPA2009.hpp>
 #include <ParallelPcap/Util.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/python.hpp>
@@ -24,6 +23,7 @@ namespace parallel_pcap {
 // Dictionary type
 typedef CountDictionary<std::string, StringHashFunction> DictionaryType;
 
+template <typename Labeler>
 class TestPcap {
 
 private:
@@ -36,8 +36,8 @@ private:
   /// This holds the ndarray containing the embeddings
   np::ndarray _embeddings;
 
-  /// This holds the DARPA2009 object used for labeling
-  DARPA2009 _darpa;
+  /// Responsible for determining labels of packets
+  Labeler _labeler;
 
   /// Messenger for printing to std out
   Messenger _msg;
@@ -57,10 +57,10 @@ public:
     std::string dictPath, 
     np::ndarray &embeddings, 
     bp::list &ngrams,
-    std::string darpafile,
+    std::string labelfile,
     bool debug
   ) : _d(0), _ngrams(ngrams), _embeddings(embeddings), 
-      _darpa(DARPA2009(darpafile)), 
+      _labeler(Labeler(labelfile)),
       _labels(np::array(p::list())), _msg(debug) 
   { 
     // Restore the dictionary
@@ -119,7 +119,7 @@ public:
     this->_msg.printDuration("TestPcap::featureVector: Time to translate: ", t1, t2);
 
     t1 = std::chrono::high_resolution_clock::now();
-    np::ndarray features = Packet2Vec<DARPA2009>::translateX(
+    np::ndarray features = Packet2Vec<Labeler>::translateX(
       this->_embeddings,
       vvtranslated,
       this->_msg.isDebug()
@@ -130,7 +130,7 @@ public:
     auto time_everything2 = std::chrono::high_resolution_clock::now();
     this->_msg.printDuration("TestPcap::featureVector: Time for everything: ", 
      time_everything1, time_everything2);
-    this->_labels = Packet2Vec<DARPA2009>::translateY(pcap, this->_darpa, 
+    this->_labels = Packet2Vec<Labeler>::translateY(pcap, this->_labeler, 
                                            this->_msg.isDebug());  
 
     return features;

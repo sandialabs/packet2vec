@@ -29,6 +29,7 @@ class Packet2Vec
 {
 
 private:
+  /// Responsible for determining labels of packets
   Labeler labeler;
 
   np::ndarray X;

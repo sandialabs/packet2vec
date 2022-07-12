@@ -80,10 +80,16 @@ BOOST_PYTHON_MODULE(parallelpcap)
       )
   ;
 
-  class_<TestPcap>("TestPcap", 
+  class_<TestPcap<DARPA2009>>("TestPcap_DARPA2009", 
     init<std::string, numpy::ndarray&, list&, std::string, bool>())
-      .def("featureVector", &TestPcap::featureVector)
-      .def("labelVector", &TestPcap::labelVector)
+      .def("featureVector", &TestPcap<DARPA2009>::featureVector)
+      .def("labelVector", &TestPcap<DARPA2009>::labelVector)
+  ;
+
+  class_<TestPcap<ISOT>>("TestPcap_ISOT", 
+    init<std::string, numpy::ndarray&, list&, std::string, bool>())
+      .def("featureVector", &TestPcap<ISOT>::featureVector)
+      .def("labelVector", &TestPcap<ISOT>::labelVector)
   ;
 
 }

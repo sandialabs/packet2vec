@@ -34,7 +34,7 @@ def check_args(args):
   dataset = args['dataset']
   assert(dataset in datasets),(f"Unknown dataset type: {dataset}")
 
-def tokens(args):
+def tokens(args, FLAGS):
   """
   Generate token vectors from raw pcap files. 
 
@@ -49,7 +49,7 @@ def tokens(args):
         ngram=[args['hyperparameters']['ngram']],
         vocab_size=args['hyperparameters']['vocab_size'])
 
-def embeddings(args):
+def embeddings(args, FLAGS):
   """
   Train a Word2Vec model using Tensorflow with
   the token vectors generated in the 'tokens'
@@ -70,7 +70,7 @@ def embeddings(args):
            args['hyperparameters']['vocab_size'])
       
 
-def features(args):
+def features(args, FLAGS):
   """
   Applys the trained Word2Vec model to translate 
   the token vectors into feature vectors.
@@ -86,7 +86,7 @@ def features(args):
                   args['dataset'],
                   args['labels'])
 
-def classifiers(args):
+def classifiers(args, FLAGS):
   """
   Trains a binary classifier using the features
   generated in the 'features' step.
@@ -105,6 +105,8 @@ def classifiers(args):
         clf = os.path.join(args['working'], 'classifiers', 'rfc.joblib')
         test.test_classifier(args['working'], args['working'], 
                    args['test_data'], clf, args['labels'], 
+                   args['dataset'],
+                   FLAGS.loglevel == "debug",
                    args['options']['threads'])
 
 
@@ -115,11 +117,13 @@ def classifiers(args):
       with timer("Testing Gaussian Naive Bayes"):
         clf = os.path.join(args['working'], 'classifiers', 'gnb.joblib')
         test.test_classifier(args['working'], args['working'], 
-                   args['test_data'], clf, args['darpa'], 
+                   args['test_data'], clf, args['labels'], 
+                   args['dataset'],
+                   FLAGS.loglevel == "debug",
                    args['options']['threads'])
 
 
-def run(args):
+def run(args, FLAGS):
   """
   Completes a full Packet2Vec run from raw
   pcap data to a trained classifier.
@@ -129,10 +133,10 @@ def run(args):
   args : dict
     Configuration dict, typically loaded from YAML file
   """
-  tokens(args)
-  embeddings(args)
-  features(args)
-  classifiers(args)
+  tokens(args, FLAGS)
+  embeddings(args, FLAGS)
+  features(args, FLAGS)
+  classifiers(args, FLAGS)
 
 if __name__ == '__main__':
   # Parse arguments and call appropriate method
@@ -206,4 +210,4 @@ if __name__ == '__main__':
   check_args(args)
   
   with timer("Packet2Vec"):
-    functions[FLAGS.phase](args)
+    functions[FLAGS.phase](args, FLAGS)

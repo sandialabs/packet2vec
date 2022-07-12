@@ -272,7 +272,9 @@ ISOT::ISOT(std::string filename)
                   boost::lexical_cast<unsigned int>(destPort));
 
     std::string key = getKey(item);
+#ifdef DEBUG
     std::cout << "item " << item.toString() << std::endl;
+#endif
 
     if (item_map.count(key) > 0)
     {
